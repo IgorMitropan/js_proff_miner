@@ -124,7 +124,12 @@ class Field {
         let td = event.target.closest('td');
         if (!td) return null;
 
-        switch (td.dataset.type) {
+        let tdType = td.dataset.type;
+        if (tdType !== 'covered' && tdType !== 'marked') {
+            return null;
+        }
+
+        switch (tdType) {
             case 'covered': {
                 td.dataset.type = 'marked';
                 this._flags++;
