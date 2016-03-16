@@ -1,0 +1,80 @@
+div {
+    margin: 10px 20px;
+}
+h2 {
+    margin: 20px;
+}
+select {
+    height: 30px;
+}
+.btn-refresh {
+    height: 30px;
+    width: 30px;
+    border-radius: 4px;
+    background-image: url(./images/refresh-icon.png);
+    background-repeat: no-repeat;
+}
+.container {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid grey;
+    display: inline-block;
+    vertical-align: middle;
+}
+.innerDiv {
+    padding: 2px;
+    margin: 0;
+    border-radius: 8px;
+    border: 1px solid grey;
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+}
+
+table {
+    margin: 10px 0;
+    border-collapse: collapse;
+}
+td {
+    height: 25px;
+    width: 25px;
+    border: 1px solid black;
+    text-align: center;
+}
+td.covered {
+    background-color: dodgerblue;
+    color: dodgerblue;
+}
+
+td.marked {
+    background-image: url(./images/flag.png);
+    background-repeat: no-repeat;
+}
+td.exploded {
+    background-image: url(./images/bomb.png);
+    background-repeat: no-repeat;
+}
+
+.notification {
+    position: absolute;
+    z-index: 1000;
+    padding: 10px 10px 15px;
+    margin: 0;
+    border-radius: 8px;
+    border: 1px solid ;
+    color: white;
+    font: normal 30px Georgia;
+    background: dodgerblue;
+
+}
+.gameOver {
+    background-color: indianred;
+    opacity: 0.8;
+    filter: alpha(opacity=80);
+}
+.victory {
+    background-color: yellow;
+    color: black;
+    opacity: 0.8;
+    filter: alpha(opacity=80);
+}
