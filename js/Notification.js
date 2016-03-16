@@ -30,10 +30,7 @@ class Notification {
         this._el.style.left = (options.left || left) + 'px';
     }
 
-    removeNotification(timeout) {
-        let node = this._el;
-        return setTimeout(function () {
-            document.body.removeChild(node);
-        }, timeout);
+    removeNotification() {
+        document.body.removeChild(this._el);
     }
 }
