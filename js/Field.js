@@ -8,8 +8,8 @@ class Field {
         this._flags = 0;
 
         this._renderField();
-        this._table = this._el.querySelector('table');
-        this._minesLeft = this._el.querySelector('.innerDiv');
+        this._table = this._el.querySelector('[data-elementType="table"]');
+        this._minesLeft = this._el.querySelector('[data-elementType="minesLeftIndicator"]');
 
         this._placeMines();
         this._placeNumbers();
@@ -62,7 +62,7 @@ class Field {
     }
 
     _renderField() {
-        let fieldHtml = 'Mines left: <div class="innerDiv"></div><table>';
+        let fieldHtml = 'Mines left: <div class="innerDiv" data-elementType="minesLeftIndicator"></div><table data-elementType="table">';
 
         for(let i = 0; i<this.height; i++) {
             fieldHtml +='<tr>\n';
