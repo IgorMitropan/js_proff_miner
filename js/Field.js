@@ -7,6 +7,14 @@ class Field {
         this._numberOfMines = options.numberOfMines;
         this._flags = 0;
 
+        this._state = Field.GAME;
+
+        this._simultaneousClick = {
+            cell: null,
+            leftButtonDown: false,
+            rightButtonDown: false
+        };
+
         this._renderField();
         this._table = this._el.querySelector('[data-elementType="table"]');
         this._minesLeft = this._el.querySelector('[data-elementType="minesLeftIndicator"]');
@@ -14,13 +22,28 @@ class Field {
         this._placeMines();
         this._placeNumbers();
 
-        this._openCell = this._openCell.bind(this);
-        this._table.addEventListener('click',this._openCell);
+        this.openCell = this.openCell.bind(this);
+        this._table.addEventListener('click',this.openCell);
 
-        this._setFlag = this._setFlag.bind(this);
-        this._table.addEventListener('contextmenu',this._setFlag);
+        this.setFlag = this.setFlag.bind(this);
+        this._table.addEventListener('contextmenu',this.setFlag);
+
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this._table.addEventListener('mousedown',this.onMouseDown);
+
+        this.onMouseUp = this.onMouseUp.bind(this);
+        this._table.addEventListener('mouseup',this.onMouseUp);
     }
 
+    static get GAME() {
+        return 0;
+    }
+    static get END_OF_GAME() {
+        return 1;
+    }
+
+
+    //-----------get methods---------------
     get width() {
         return this._width;
     }
@@ -33,10 +56,136 @@ class Field {
     get flags() {
         return this._flags;
     }
-
-    isAnyMineHere(y,x) {
-        return ( this._table.rows[y].cells[x].dataset.info ==='M' );
+    get state() {
+        return this._state;
     }
+
+    //-----------------event listeners----------------
+    openCell(event) {
+        event.preventDefault();
+        if (this.state === Field.END_OF_GAME) {
+            return null;
+        }
+
+        let td = event.target.closest('td');
+        if (!td) {
+            return null;
+        }
+
+        if (td.dataset.type !== 'covered') {
+            return null;
+        }
+
+        let y = td.parentNode.rowIndex;
+        let x = td.cellIndex;
+
+        if ( this._isAnyMineHere(y, x) ) {
+            this._endOfGame('gameOver');
+        } else {
+            td.dataset.type = 'opened';
+            this._showOpenedCell(td);
+
+            if ( td.dataset.info ==='' ) {
+                this._openEmptyFieldAroundCell(y,x);
+            }
+
+            if ( this._doesPlayerWin() ) {
+                this._endOfGame('victory');
+            }
+        }
+    }
+
+    setFlag(event) {
+        event.preventDefault();
+        if (this.state === Field.END_OF_GAME) {
+            return null;
+        }
+
+        let td = event.target.closest('td');
+
+        if (!td) {
+            return null;
+        }
+
+        let tdType = td.dataset.type;
+        if (tdType !== 'covered' && tdType !== 'marked') {
+            return null;
+        }
+
+        switch (tdType) {
+            case 'covered': {
+                td.dataset.type = 'marked';
+                this._flags++;
+                break;
+            }
+            case 'marked': {
+                td.dataset.type = 'covered';
+                this._flags--;
+                break;
+            }
+        }
+
+        this._toggleFlag(td);
+        this._showMinesLeft();
+    }
+
+    onMouseDown(event) {
+        event.preventDefault();
+        if (this.state === Field.END_OF_GAME) {
+            return null;
+        }
+
+        if (event.which !==1 && event.which !==3) {
+            return null;
+        }
+
+        let td = event.target.closest('td');
+        if (!td) {
+            return null;
+        }
+
+        if (event.which === 1) {
+            this._simultaneousClick.leftButtonDown = true;
+        }
+
+        if (event.which === 3) {
+            this._simultaneousClick.rightButtonDown = true;
+        }
+
+        if (this._simultaneousClick.cell) {
+            let sameCell = (this._simultaneousClick.cell === td);
+            let leftButtonDown = this._simultaneousClick.leftButtonDown;
+            let rightButtonDown = this._simultaneousClick.rightButtonDown;
+
+            if (sameCell && leftButtonDown && rightButtonDown) {
+                this.openNeighbours(td);
+            } else {
+                this._simultaneousClick.leftButtonDown = false;
+                this._simultaneousClick.rightButtonDown = false;
+                this._simultaneousClick.cell = null;
+            }
+        } else {
+            this._simultaneousClick.cell = td;
+        }
+    }
+
+    onMouseUp(event) {
+        event.preventDefault();
+
+        if(event.which == 1) {
+            this._simultaneousClick.leftButtonDown = false;
+        }
+
+        if (event.which == 3) {
+            this._simultaneousClick.rightButtonDown = false;
+        }
+
+        this._deselectCells();
+
+        this._simultaneousClick.cell = null;
+    }
+
+//----------------subordinate public method (everyone can use it)--------------------
     cellNeighbours(y,x) {
         let neighbours = [];
 
@@ -51,16 +200,33 @@ class Field {
         return neighbours;
     }
 
-    mineCounter(array) {
-        return array.reduce( (count, cell)=> {
-            if ( this.isAnyMineHere(cell.parentNode.rowIndex, cell.cellIndex) ) {
-                count++;
-            }
+    openNeighbours(cell) {
+        if (!cell.innerHTML) {
+            return null;
+        }
+        let y = cell.parentNode.rowIndex;
+        let x = cell.cellIndex;
 
-            return count;
-        },0);
+        let neighbours = this.cellNeighbours(y,x);
+
+        this._selectCells(neighbours);
+
+        let countFlagsAroundCell = this._flagCounter(neighbours);
+
+        if (parseInt(cell.dataset.info) === countFlagsAroundCell) {
+            neighbours.forEach((td)=>{
+                    let event = new MouseEvent("click", {
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                    td.dispatchEvent(event);
+                })
+        }
+
     }
 
+    //--------------main private methods-----------
     _renderField() {
         let fieldHtml = 'Mines left: <div class="innerDiv" data-elementType="minesLeftIndicator"></div><table data-elementType="table">';
 
@@ -82,7 +248,7 @@ class Field {
             let y = Math.round( Math.random()*(this.height - 1) );
             let x = Math.round( Math.random()*(this.width - 1) );
 
-            if ( !this.isAnyMineHere(y,x) ) {
+            if ( !this._isAnyMineHere(y,x) ) {
                 this._table.rows[y].cells[x].dataset.info = 'M';
                 i++;
             }
@@ -90,85 +256,18 @@ class Field {
 
         this._showMinesLeft();
     }
+
     _placeNumbers() {
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
-                if ( !this.isAnyMineHere(i,j) ) {
-                    let count = this.mineCounter( this.cellNeighbours(i,j) );
+                if ( !this._isAnyMineHere(i,j) ) {
+                    let count = this._mineCounter( this.cellNeighbours(i,j) );
                     this._table.rows[i].cells[j].dataset.info = count || '';
                 }
             }
         }
     }
 
-    _openCell(event) {
-        let td = event.target.closest('td');
-
-        if (!td) return null;
-
-        let y = td.parentNode.rowIndex;
-        let x = td.cellIndex;
-
-        if ( this.isAnyMineHere(y, x) ) {
-            this._endOfGame('gameOver');
-            return null;
-        }
-
-        td.dataset.type = 'opened';
-        this._showOpenedCell(td);
-
-        if ( td.dataset.info ==='' ) {
-            this._openNeighbours(y,x);
-        }
-
-        if ( this._doesPlayerWin() ) {
-            this._endOfGame('victory');
-        }
-    }
-    _setFlag(event) {
-        event.preventDefault();
-
-        let td = event.target.closest('td');
-
-        if (!td) return null;
-
-        let tdType = td.dataset.type;
-
-        if (tdType !== 'covered' && tdType !== 'marked') {
-            return null;
-        }
-
-        switch (tdType) {
-            case 'covered': {
-                td.dataset.type = 'marked';
-                this._flags++;
-                break;
-            }
-                case 'marked': {
-                    td.dataset.type = 'covered';
-                    this._flags--;
-                    break;
-                }
-        }
-
-        this._toggleFlag(td);
-        this._showMinesLeft();
-    }
-    _openNeighbours(y,x) {
-        this.cellNeighbours(y, x).forEach((td)=>{
-            let isMine = this.isAnyMineHere(td.parentNode.rowIndex, td.cellIndex);
-            let isOpened = (td.dataset.type ==='opened');
-
-            if ( !(isMine || isOpened) ) {
-                let event = new MouseEvent("click", {
-                    bubbles: true,
-                    cancelable: true
-                });
-
-                td.dispatchEvent(event);
-            }
-        })
-    }
     _doesPlayerWin() {
         let victory = true;
 
@@ -176,7 +275,7 @@ class Field {
             for (let j = 0; j < this.width; j++) {
                 let td = this._table.rows[i].cells[j];
 
-                let isMine = this.isAnyMineHere(i, j);
+                let isMine = this._isAnyMineHere(i, j);
                 let isClosed = (td.dataset.type ==='covered' || td.dataset.type ==='marked');
                 if (isClosed && !isMine) {
                     victory = false;
@@ -187,9 +286,9 @@ class Field {
 
         return victory;
     }
+
     _endOfGame(typeOfEnd) {
-        this._table.removeEventListener('click', this._openCell);
-        this._table.removeEventListener('contextmenu',this._setFlag);
+        this._state = Field.END_OF_GAME;
 
         if (typeOfEnd === 'gameOver') {
             this._showMines();
@@ -202,11 +301,51 @@ class Field {
         this._el.dispatchEvent(event);
     }
 
+//------------------ different subordinate private methods---------------
+    _isAnyMineHere(y,x) {
+        return ( this._table.rows[y].cells[x].dataset.info ==='M' );
+    }
 
+    _mineCounter(array) {
+        return array.reduce( (count, cell)=> {
+            if ( this._isAnyMineHere(cell.parentNode.rowIndex, cell.cellIndex) ) {
+                count++;
+            }
+
+            return count;
+        },0);
+    }
+    _flagCounter(array) {
+        return array.reduce( (count, cell)=> {
+            if ( cell.dataset.type === 'marked' ) {
+                count++;
+            }
+
+            return count;
+        },0);
+    }
+
+    _openEmptyFieldAroundCell(y,x) {
+        this.cellNeighbours(y, x).forEach((td)=>{
+            let isMine = this._isAnyMineHere(td.parentNode.rowIndex, td.cellIndex);
+            let isOpened = (td.dataset.type ==='opened');
+
+            if ( !(isMine || isOpened) ) {
+                let event = new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                td.dispatchEvent(event);
+            }
+        })
+    }
+
+//---------different non-logical private methods changing styles-------------
     _showMines() {
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
-                if (this.isAnyMineHere(i, j)) {
+                if (this._isAnyMineHere(i, j)) {
                     let td =  this._table.rows[i].cells[j];
                     td.classList.remove('covered');
                     td.classList.add('exploded');
@@ -220,12 +359,26 @@ class Field {
     }
 
     _showOpenedCell(cell) {
-        cell.classList.remove('covered','marked');
+        cell.classList.remove('covered');
         cell.innerHTML = cell.dataset.info;
     }
 
     _toggleFlag(cell) {
         cell.classList.toggle('marked');
+    }
+
+    _selectCells(array) {
+        array.forEach((td)=>{
+            if (td.dataset.type==='covered') {
+                td.classList.add('selected');
+            }
+        });
+    }
+    _deselectCells () {
+        let selectedCells = this._table.querySelectorAll('.selected');
+        [].forEach.call(selectedCells,(td)=>{
+                td.classList.remove('selected');
+        });
     }
 
 }

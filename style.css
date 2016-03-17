@@ -1,13 +1,10 @@
-div {
-    margin: 10px 20px;
-}
-
 h2 {
     margin: 20px;
 }
 select {
     height: 30px;
 }
+
 .btn-refresh {
     height: 30px;
     width: 30px;
@@ -15,6 +12,10 @@ select {
     background-image: url(./images/refresh-icon.png);
     background-repeat: no-repeat;
 }
+
+div {
+     margin: 10px 20px;
+ }
 .container {
     padding: 10px;
     border-radius: 8px;
@@ -44,9 +45,13 @@ td {
 }
 td.covered {
     background-color: dodgerblue;
-    color: dodgerblue;
 }
-
+td.covered:hover {
+    background-color: #5f90ff;
+}
+td.selected {
+    background-color: #5f90ff;
+}
 td.marked {
     background-image: url(./images/flag.png);
     background-repeat: no-repeat;
