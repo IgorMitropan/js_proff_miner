@@ -4,15 +4,15 @@ class Field {
         this._el = options.element;
         this._width = options.width;
         this._height = options.height;
-        this._mines = options.mines;
+        this._numberOfMines = options.numberOfMines;
         this._flags = 0;
 
         this._renderField();
         this._table = this._el.querySelector('table');
         this._minesLeft = this._el.querySelector('.innerDiv');
 
-        this._setMines();
-        this._setNumbers();
+        this._placeMines();
+        this._placeNumbers();
 
         this._openCell = this._openCell.bind(this);
         this._table.addEventListener('click',this._openCell);
@@ -27,8 +27,8 @@ class Field {
     get height() {
         return this._height;
     }
-    get mines() {
-        return this._mines;
+    get numberOfMines() {
+        return this._numberOfMines;
     }
     get flags() {
         return this._flags;
@@ -39,6 +39,7 @@ class Field {
     }
     cellNeighbours(y,x) {
         let neighbours = [];
+
         for (let i = Math.max(y-1, 0); i <= Math.min(y+1, this.height-1); i++) {
             for (let j = Math.max(x-1, 0); j <= Math.min(x+1, this.width-1); j++) {
                 if ( !(i === y && j === x) ) {
@@ -46,6 +47,7 @@ class Field {
                 }
             }
         }
+
         return neighbours;
     }
 
@@ -54,6 +56,7 @@ class Field {
             if ( this.isAnyMineHere(cell.parentNode.rowIndex, cell.cellIndex) ) {
                 count++;
             }
+
             return count;
         },0);
     }
@@ -70,11 +73,12 @@ class Field {
         }
 
         fieldHtml += '</table>';
+
         this._el.insertAdjacentHTML('beforeEnd',fieldHtml);
     }
 
-    _setMines() {
-        for(let i = 1; i<=this.mines;) {
+    _placeMines() {
+        for(let i = 1; i<=this.numberOfMines;) {
             let y = Math.round( Math.random()*(this.height - 1) );
             let x = Math.round( Math.random()*(this.width - 1) );
 
@@ -83,14 +87,14 @@ class Field {
                 i++;
             }
         }
+
         this._showMinesLeft();
     }
-    _setNumbers() {
+    _placeNumbers() {
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
                 if ( !this.isAnyMineHere(i,j) ) {
                     let count = this.mineCounter( this.cellNeighbours(i,j) );
-
                     this._table.rows[i].cells[j].dataset.info = count || '';
                 }
             }
@@ -99,7 +103,9 @@ class Field {
 
     _openCell(event) {
         let td = event.target.closest('td');
+
         if (!td) return null;
+
         let y = td.parentNode.rowIndex;
         let x = td.cellIndex;
 
@@ -121,10 +127,13 @@ class Field {
     }
     _setFlag(event) {
         event.preventDefault();
+
         let td = event.target.closest('td');
+
         if (!td) return null;
 
         let tdType = td.dataset.type;
+
         if (tdType !== 'covered' && tdType !== 'marked') {
             return null;
         }
@@ -149,20 +158,24 @@ class Field {
         this.cellNeighbours(y, x).forEach((td)=>{
             let isMine = this.isAnyMineHere(td.parentNode.rowIndex, td.cellIndex);
             let isOpened = (td.dataset.type ==='opened');
+
             if ( !(isMine || isOpened) ) {
                 let event = new MouseEvent("click", {
                     bubbles: true,
                     cancelable: true
                 });
+
                 td.dispatchEvent(event);
             }
         })
     }
     _doesPlayerWin() {
         let victory = true;
+
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
                 let td = this._table.rows[i].cells[j];
+
                 let isMine = this.isAnyMineHere(i, j);
                 let isClosed = (td.dataset.type ==='covered' || td.dataset.type ==='marked');
                 if (isClosed && !isMine) {
@@ -171,6 +184,7 @@ class Field {
                 }
             }
         }
+
         return victory;
     }
     _endOfGame(typeOfEnd) {
@@ -181,10 +195,11 @@ class Field {
             this._showMines();
         }
 
-            let event = new CustomEvent("endOfGame", {
-                detail: { type: typeOfEnd }
-            });
-            this._el.dispatchEvent(event);
+        let event = new CustomEvent("endOfGame", {
+            detail: { type: typeOfEnd }
+        });
+
+        this._el.dispatchEvent(event);
     }
 
 
@@ -199,14 +214,18 @@ class Field {
             }
         }
     }
+
     _showMinesLeft() {
-        this._minesLeft.innerHTML = this.mines - this.flags;
+        this._minesLeft.innerHTML = this.numberOfMines - this.flags;
     }
+
     _showOpenedCell(cell) {
         cell.classList.remove('covered','marked');
         cell.innerHTML = cell.dataset.info;
     }
+
     _toggleFlag(cell) {
         cell.classList.toggle('marked');
     }
+
 }

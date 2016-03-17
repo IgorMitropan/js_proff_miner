@@ -1,36 +1,61 @@
 'use strict';
+const TOP_OFFSET_FOR_NOTIFICATION = 10;
+const RIGHT_OFFSET_FOR_NOTIFICATION = 10;
 class Notification {
     constructor(options) {
         this._el = document.createElement('div');
         this._el.className = "notification";
         this._el.innerHTML = options.text;
-        if (options.addClass) {
-            this._el.classList.add(options.addClass);
-        }
-        document.body.appendChild(this._el);
 
-        this.positionAt(options);
+        if (options.additionalStyleClass) {
+            this._el.classList.add(options.additionalStyleClass);
+        }
+
+        let parent = options.place || document.body;
+        parent.appendChild(this._el);
+
+        if (options.top && options.left) {
+            this._el.style.top = options.top + 'px';
+            this._el.style.left = options.left + 'px';
+        } else {
+            this.positionAt(options);
+        }
     }
     positionAt(options) {
-        let box = options.anchor.getBoundingClientRect();
+        let box;
         let top;
         let left;
-        switch (options.position) {
-            case 'center': {
-                top = box.top + options.anchor.offsetHeight / 2 - this._el.offsetHeight / 2;
-                left = box.left + options.anchor.offsetWidth / 2 - this._el.offsetWidth / 2;
-                break;
-            }
-            default: {
-                top = 10;
-                left = 530;
-            }
+
+        if (options.anchor) {
+            box = options.anchor.getBoundingClientRect();
+        } else {
+            box = this._el.parentNode.getBoundingClientRect();
         }
-        this._el.style.top = (options.top || top ) + 'px';
-        this._el.style.left = (options.left || left) + 'px';
+
+        if (options.position) {
+            switch (options.position) {
+                case 'center': {
+                    top = box.top + box.height / 2 - this._el.offsetHeight / 2;
+                    left = box.left + box.width / 2 - this._el.offsetWidth / 2;
+                    break;
+                }
+            }
+        } else {
+            top = box.top + TOP_OFFSET_FOR_NOTIFICATION;
+            left = box.right - this._el.offsetWidth - RIGHT_OFFSET_FOR_NOTIFICATION;
+        }
+
+        this._el.style.top = top + 'px';
+        this._el.style.left = left + 'px';
     }
 
+    hideNotification() {
+        this._el.hidden = true;
+    }
+    showNotification() {
+        this._el.hidden = false;
+    }
     removeNotification() {
-        document.body.removeChild(this._el);
+        this._el.parentNode.removeChild(this._el);
     }
 }

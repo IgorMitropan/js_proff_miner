@@ -1,5 +1,10 @@
 'use strict';
-const MAX_FIELD_HEIGHT = 16;
+const MAX_FIELD_HEIGHT = 16; // according to MS Windows
+const MINES_CONFIGURATION = {
+    9: 10,
+    16: 40,
+    30: 99
+};
 let myField;
 let myNotification;
 
@@ -7,25 +12,28 @@ let container = document.getElementById('fieldPlace');
 container.addEventListener('endOfGame', endOfGame);
 
 function endOfGame(event) {
-    let classAddedToNotification;
+    let additionalClass;
     let message;
+
     switch (event.detail.type) {
         case 'gameOver': {
-            classAddedToNotification = 'gameOver';
+            additionalClass = 'gameOver';
             message = 'Game Over!!!';
             break;
         }
         case 'victory': {
-            classAddedToNotification = 'victory';
+            additionalClass = 'victory';
             message = 'Victory!!!';
             break;
         }
     }
+
     myNotification = new Notification({
         text: message,
+        place: container,
         anchor: container.querySelector('table'),
         position: 'center',
-        addClass: classAddedToNotification
+        additionalStyleClass: additionalClass
     });
 }
 
@@ -39,6 +47,7 @@ function createField() {
     clear();
 
     let size = parseInt(fieldSizeSelect.options[fieldSizeSelect.selectedIndex].value);
+
     if (size) {
         container.classList.add('container');
         refresh.hidden = false;
@@ -46,7 +55,7 @@ function createField() {
         myField = new Field({ element: container,
             width: size,
             height: Math.min(size, MAX_FIELD_HEIGHT),
-            mines: calculateNumberOfMines(size)
+            numberOfMines: calculateNumberOfMines(size)
         });
     } else {
         container.classList.remove('container');
@@ -55,26 +64,18 @@ function createField() {
 }
 
 function clear() {
-    container.innerHTML = '';
     if(myNotification) {
-        myNotification.removeNotification(0);
+        myNotification.removeNotification();
         myNotification = null;
     }
+
     if(myField) {
         myField = null;
     }
+
+    container.innerHTML = '';
 }
 
 function calculateNumberOfMines(size) {
-    switch (size) {
-        case 9: {
-            return 10;
-        }
-        case 16: {
-            return 40;
-        }
-        case 30: {
-            return 99;
-        }
-    }
+    return MINES_CONFIGURATION[size];
 }
