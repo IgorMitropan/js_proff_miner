@@ -6,6 +6,7 @@ class Notification {
         this._el = document.createElement('div');
         this._el.className = "notification";
         this._el.innerHTML = options.text;
+        this._el.oncontextmenu = Notification.preventContextMenu;
 
         if (options.additionalStyleClass) {
             this._el.classList.add(options.additionalStyleClass);
@@ -15,6 +16,10 @@ class Notification {
         parent.appendChild(this._el);
 
         this.positionAt(options);
+    }
+
+    static preventContextMenu(event) {
+        event.preventDefault();
     }
 
     positionAt(options) {
