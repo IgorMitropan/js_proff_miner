@@ -4,7 +4,6 @@ h2 {
 select {
     height: 30px;
 }
-
 .btn-refresh {
     height: 30px;
     width: 30px;
@@ -12,10 +11,9 @@ select {
     background-image: url(./images/refresh-icon.png);
     background-repeat: no-repeat;
 }
-
 div {
-     margin: 10px 20px;
- }
+     margin: 10px;
+}
 .container {
     padding: 10px;
     border-radius: 8px;
@@ -23,6 +21,8 @@ div {
     display: inline-block;
     vertical-align: middle;
 }
+
+
 .innerDiv {
     padding: 2px;
     margin: 0;
@@ -32,11 +32,11 @@ div {
     vertical-align: middle;
     text-align: center;
 }
-
 table {
     margin: 10px 0;
     border-collapse: collapse;
 }
+
 td {
     height: 25px;
     width: 25px;
@@ -60,7 +60,6 @@ td.exploded {
     background-image: url(./images/bomb.png);
     background-repeat: no-repeat;
 }
-
 .notification {
     position: absolute;
     z-index: 1000;
@@ -73,6 +72,7 @@ td.exploded {
     background: dodgerblue;
 
 }
+
 .gameOver {
     background-color: indianred;
     opacity: 0.8;
@@ -83,4 +83,8 @@ td.exploded {
     color: black;
     opacity: 0.8;
     filter: alpha(opacity=80);
+}
+
+.js-hidden {
+    display: none;
 }

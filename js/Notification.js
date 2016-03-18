@@ -55,12 +55,14 @@ class Notification {
         }
     }
 
-    hideNotification() {
-        this._el.hidden = true;
+    show() {
+        this._el.classList.remove('js-hidden');
     }
-    showNotification() {
-        this._el.hidden = false;
+
+    hide() {
+        this._el.classList.add('js-hidden');
     }
+
     removeNotification() {
         this._el.parentNode.removeChild(this._el);
     }

@@ -8,21 +8,25 @@
 
     <script src="./js/Notification.js" defer></script>
     <script src="./js/Field.js" defer></script>
+    <script src="./js/Game.js" defer></script>
     <script src="./js/Main.js" defer></script>
 </head>
 <body>
 <h2>Minesweeper is a cool game!</h2>
-<div>
-    <select id="fieldSize">
-        <option value="0" selected>Choose the level of difficulty:</option>
-        <option value="9">Beginner (10 mines, field 9 x 9)</option>
-        <option value="16">Intermediate (40 mines, field 16 x 16)</option>
-        <option value="30">Expert (99 mines, field 16 x 30)</option>
-    </select>
-    <button id="refresh" class='btn-refresh' hidden>_</button>
-</div>
+<div id="container">
+    <div>
+        <select data-selector="levelSelector">
+            <option value="0" selected>Choose the level of difficulty:</option>
+            <option value="9">Beginner (10 mines, field 9 x 9)</option>
+            <option value="16">Intermediate (40 mines, field 16 x 16)</option>
+            <option value="30">Expert (99 mines, field 16 x 30)</option>
+        </select>
 
-<div id="fieldPlace">
+        <button data-selector="refreshBtn"class=' btn-refresh js-hidden'>_</button>
+    </div>
+    <div data-component="fieldPlace" class="container js-hidden ">
+        Mines left: <div data-selector="minesIndicator" class="innerDiv"> </div>
+    </div>
 </div>
 
 </body>

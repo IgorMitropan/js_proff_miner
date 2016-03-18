@@ -7,7 +7,7 @@ class Field {
         this._numberOfMines = options.numberOfMines;
         this._flags = 0;
 
-        this._state = Field.GAME;
+        this._state = Field.PLAYING;
 
         this._simultaneousClick = {
             cell: null,
@@ -16,26 +16,26 @@ class Field {
         };
 
         this._renderField();
-        this._table = this._el.querySelector('[data-elementType="table"]');
-        this._minesLeft = this._el.querySelector('[data-elementType="minesLeftIndicator"]');
+        this._field = this._el.querySelector('[data-selector="field"]');
+        this._minesLeft = this._el.querySelector('[data-selector="minesIndicator"]');
 
         this._placeMines();
         this._placeNumbers();
 
-        this.openCell = this.openCell.bind(this);
-        this._table.addEventListener('click',this.openCell);
+        this._openCell = this._openCell.bind(this);
+        this._field.addEventListener('click',this._openCell);
 
-        this.setFlag = this.setFlag.bind(this);
-        this._table.addEventListener('contextmenu',this.setFlag);
+        this._setFlag = this._setFlag.bind(this);
+        this._field.addEventListener('contextmenu',this._setFlag);
 
-        this.onMouseDown = this.onMouseDown.bind(this);
-        this._table.addEventListener('mousedown',this.onMouseDown);
+        this._onMouseDown = this._onMouseDown.bind(this);
+        this._field.addEventListener('mousedown',this._onMouseDown);
 
-        this.onMouseUp = this.onMouseUp.bind(this);
-        this._table.addEventListener('mouseup',this.onMouseUp);
+        this._onMouseUp = this._onMouseUp.bind(this);
+        this._field.addEventListener('mouseup',this._onMouseUp);
     }
 
-    static get GAME() {
+    static get PLAYING() {
         return 0;
     }
     static get END_OF_GAME() {
@@ -60,8 +60,27 @@ class Field {
         return this._state;
     }
 
+//----------------public methods--------------------
+    clear() {
+        this._el.removeChild(this._field);
+        this._field = null;
+    }
+    cellNeighbours(y,x) {
+        let neighbours = [];
+
+        for (let i = Math.max(y-1, 0); i <= Math.min(y+1, this.height-1); i++) {
+            for (let j = Math.max(x-1, 0); j <= Math.min(x+1, this.width-1); j++) {
+                if ( !(i === y && j === x) ) {
+                    neighbours.push(this._field.rows[i].cells[j]);
+                }
+            }
+        }
+
+        return neighbours;
+    }
+
     //-----------------event listeners----------------
-    openCell(event) {
+    _openCell(event) {
         event.preventDefault();
         if (this.state === Field.END_OF_GAME) {
             return null;
@@ -95,7 +114,7 @@ class Field {
         }
     }
 
-    setFlag(event) {
+    _setFlag(event) {
         event.preventDefault();
         if (this.state === Field.END_OF_GAME) {
             return null;
@@ -129,7 +148,7 @@ class Field {
         this._showMinesLeft();
     }
 
-    onMouseDown(event) {
+    _onMouseDown(event) {
         event.preventDefault();
         if (this.state === Field.END_OF_GAME) {
             return null;
@@ -169,7 +188,7 @@ class Field {
         }
     }
 
-    onMouseUp(event) {
+    _onMouseUp(event) {
         event.preventDefault();
 
         if(event.which == 1) {
@@ -185,50 +204,9 @@ class Field {
         this._simultaneousClick.cell = null;
     }
 
-//----------------subordinate public method (everyone can use it)--------------------
-    cellNeighbours(y,x) {
-        let neighbours = [];
-
-        for (let i = Math.max(y-1, 0); i <= Math.min(y+1, this.height-1); i++) {
-            for (let j = Math.max(x-1, 0); j <= Math.min(x+1, this.width-1); j++) {
-                if ( !(i === y && j === x) ) {
-                    neighbours.push(this._table.rows[i].cells[j]);
-                }
-            }
-        }
-
-        return neighbours;
-    }
-
-    openNeighbours(cell) {
-        if (!cell.innerHTML) {
-            return null;
-        }
-        let y = cell.parentNode.rowIndex;
-        let x = cell.cellIndex;
-
-        let neighbours = this.cellNeighbours(y,x);
-
-        this._selectCells(neighbours);
-
-        let countFlagsAroundCell = this._flagCounter(neighbours);
-
-        if (parseInt(cell.dataset.info) === countFlagsAroundCell) {
-            neighbours.forEach((td)=>{
-                    let event = new MouseEvent("click", {
-                        bubbles: true,
-                        cancelable: true
-                    });
-
-                    td.dispatchEvent(event);
-                })
-        }
-
-    }
-
     //--------------main private methods-----------
     _renderField() {
-        let fieldHtml = 'Mines left: <div class="innerDiv" data-elementType="minesLeftIndicator"></div><table data-elementType="table">';
+        let fieldHtml = '<table data-selector="field">';
 
         for(let i = 0; i<this.height; i++) {
             fieldHtml +='<tr>\n';
@@ -249,7 +227,7 @@ class Field {
             let x = Math.round( Math.random()*(this.width - 1) );
 
             if ( !this._isAnyMineHere(y,x) ) {
-                this._table.rows[y].cells[x].dataset.info = 'M';
+                this._field.rows[y].cells[x].dataset.info = 'M';
                 i++;
             }
         }
@@ -262,7 +240,7 @@ class Field {
             for (let j = 0; j < this.width; j++) {
                 if ( !this._isAnyMineHere(i,j) ) {
                     let count = this._mineCounter( this.cellNeighbours(i,j) );
-                    this._table.rows[i].cells[j].dataset.info = count || '';
+                    this._field.rows[i].cells[j].dataset.info = count || '';
                 }
             }
         }
@@ -273,7 +251,7 @@ class Field {
 
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
-                let td = this._table.rows[i].cells[j];
+                let td = this._field.rows[i].cells[j];
 
                 let isMine = this._isAnyMineHere(i, j);
                 let isClosed = (td.dataset.type ==='covered' || td.dataset.type ==='marked');
@@ -303,7 +281,7 @@ class Field {
 
 //------------------ different subordinate private methods---------------
     _isAnyMineHere(y,x) {
-        return ( this._table.rows[y].cells[x].dataset.info ==='M' );
+        return ( this._field.rows[y].cells[x].dataset.info ==='M' );
     }
 
     _mineCounter(array) {
@@ -315,6 +293,7 @@ class Field {
             return count;
         },0);
     }
+
     _flagCounter(array) {
         return array.reduce( (count, cell)=> {
             if ( cell.dataset.type === 'marked' ) {
@@ -323,6 +302,32 @@ class Field {
 
             return count;
         },0);
+    }
+
+    _openNeighbours(cell) {
+        if (!cell.innerHTML) {
+            return null;
+        }
+        let y = cell.parentNode.rowIndex;
+        let x = cell.cellIndex;
+
+        let neighbours = this.cellNeighbours(y,x);
+
+        this._selectCells(neighbours);
+
+        let countFlagsAroundCell = this._flagCounter(neighbours);
+
+        if (parseInt(cell.dataset.info) === countFlagsAroundCell) {
+            neighbours.forEach((td)=>{
+                let event = new MouseEvent("click", {
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                td.dispatchEvent(event);
+            })
+        }
+
     }
 
     _openEmptyFieldAroundCell(y,x) {
@@ -346,7 +351,7 @@ class Field {
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
                 if (this._isAnyMineHere(i, j)) {
-                    let td =  this._table.rows[i].cells[j];
+                    let td =  this._field.rows[i].cells[j];
                     td.classList.remove('covered');
                     td.classList.add('exploded');
                 }
@@ -375,7 +380,7 @@ class Field {
         });
     }
     _deselectCells () {
-        let selectedCells = this._table.querySelectorAll('.selected');
+        let selectedCells = this._field.querySelectorAll('.selected');
         [].forEach.call(selectedCells,(td)=>{
                 td.classList.remove('selected');
         });
