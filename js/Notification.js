@@ -1,7 +1,8 @@
 'use strict';
 const TOP_OFFSET_FOR_NOTIFICATION = 10;
 const RIGHT_OFFSET_FOR_NOTIFICATION = 10;
-class Notification {
+
+export default class Notification {
     constructor(options) {
         this._el = document.createElement('div');
         this._el.className = "notification";

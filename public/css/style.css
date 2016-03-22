@@ -8,7 +8,7 @@ select {
     height: 30px;
     width: 30px;
     border-radius: 4px;
-    background-image: url(./images/refresh-icon.png);
+    background-image: url(../images/refresh-icon.png);
     background-repeat: no-repeat;
 }
 div {
@@ -53,11 +53,11 @@ td.selected {
     background-color: #5f90ff;
 }
 td.marked {
-    background-image: url(./images/flag.png);
+    background-image: url(../images/flag.png);
     background-repeat: no-repeat;
 }
 td.exploded {
-    background-image: url(./images/bomb.png);
+    background-image: url(../images/bomb.png);
     background-repeat: no-repeat;
 }
 .notification {

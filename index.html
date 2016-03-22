@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <title>Minesweeper</title>
 
-    <link href="style.css" rel="stylesheet">
+    <link href="./public/css/style.css" rel="stylesheet">
 
-    <script src="./js/Notification.js" defer></script>
-    <script src="./js/Cell.js" defer></script>
-    <script src="./js/Field.js" defer></script>
-    <script src="./js/Game.js" defer></script>
-    <script src="./js/Main.js" defer></script>
+    <script src="./public/minesweeper.js" defer></script>
 </head>
 <body>
 <h2>Minesweeper is a cool game!</h2>
@@ -23,7 +19,7 @@
             <option value="30">Expert (99 mines, field 16 x 30)</option>
         </select>
 
-        <button data-selector="refreshBtn"class=' btn-refresh js-hidden'>_</button>
+        <button data-selector="refreshBtn" class=' btn-refresh js-hidden'>_</button>
     </div>
     <div data-component="fieldPlace" class="container js-hidden ">
         Mines left: <div data-selector="minesIndicator" class="innerDiv"> </div>

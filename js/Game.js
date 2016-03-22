@@ -1,4 +1,7 @@
 'use strict';
+import Field from'./Field';
+import Notification from './Notification';
+
 const MAX_FIELD_HEIGHT = 16; // according to MS Windows
 const MINES_CONFIGURATION = {
     9: 10,
@@ -10,7 +13,7 @@ function calculateNumberOfMines(size) {
     return MINES_CONFIGURATION[size];
 }
 
-class Minesweeper {
+export default class Minesweeper {
     constructor(options) {
         this._el = options.element;
 

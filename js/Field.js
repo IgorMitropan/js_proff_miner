@@ -1,7 +1,11 @@
 'use strict';
-class Field extends Cell{
+import * as polyfills from'./Polyfills';
+polyfills.installMatches(); //cross browser polyfill for 'matches' (does not supported by IE)
+polyfills.installClosest(); //cross browser polyfill for 'closest' (does not supported by IE)
+polyfills.installCustomEvent(); //cross browser polyfill for 'custom events' (does not supported by IE)
+
+export default class Field{
     constructor(options) {
-        super();
         this._el = options.element;
         this._width = options.width;
         this._height = options.height;
@@ -35,14 +39,13 @@ class Field extends Cell{
         this._onMouseUp = this._onMouseUp.bind(this);
         this._field.addEventListener('mouseup',this._onMouseUp);
     }
-
+//------------ static constants describing state of a game-------------
     static get PLAYING() {
         return 0;
     }
     static get END_OF_GAME() {
         return 1;
     }
-
 
     //-----------get methods---------------
     get width() {
@@ -99,11 +102,11 @@ class Field extends Cell{
         let y = td.parentNode.rowIndex;
         let x = td.cellIndex;
 
-        if( Cell.isAnyMineHere(td) ) {
+        if( Field._isAnyMineHere(td) ) {
             this._endOfGame('gameOver');
         } else {
             td.dataset.type = 'opened';
-           Field.showOpenedCell(td);
+           Field._showOpenedCell(td);
 
             if ( td.dataset.info ==='' ) {
                 this._openEmptyFieldAroundCell(y,x);
@@ -146,7 +149,7 @@ class Field extends Cell{
             }
         }
 
-        Field.toggleFlag(td);
+        Field._toggleFlag(td);
         this._showMinesLeft();
     }
 
@@ -229,7 +232,7 @@ class Field extends Cell{
             let x = Math.round( Math.random()*(this.width - 1) );
             let td = this._field.rows[y].cells[x];
 
-            if ( !Field.isAnyMineHere(td) ) {
+            if ( !Field._isAnyMineHere(td) ) {
                 td.dataset.info = 'M';
                 i++;
             }
@@ -242,8 +245,8 @@ class Field extends Cell{
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
                 let td = this._field.rows[i].cells[j];
-                if ( !Field.isAnyMineHere(td) ) {
-                    let count = Field.mineCounter( this.cellNeighbours(i,j) );
+                if ( !Field._isAnyMineHere(td) ) {
+                    let count = Field._mineCounter( this.cellNeighbours(i,j) );
                     td.dataset.info = count || '';
                 }
             }
@@ -257,14 +260,39 @@ class Field extends Cell{
             this._showMines();
         }
 
+
         let event = new CustomEvent("endOfGame", {
-            detail: { type: typeOfEnd }
+            detail: {type: typeOfEnd}
         });
 
         this._el.dispatchEvent(event);
     }
 
 //------------------ different subordinate private methods---------------
+
+    static _isAnyMineHere(cell) {
+        return ( cell.dataset.info ==='M' );
+    }
+
+    static _mineCounter(array) {
+        return array.reduce( (count, cell)=> {
+            if ( Field._isAnyMineHere(cell) ) {
+                count++;
+            }
+
+            return count;
+        },0);
+    }
+
+    static _flagCounter(array) {
+        return array.reduce( (count, cell)=> {
+            if ( cell.dataset.type === 'marked' ) {
+                count++;
+            }
+
+            return count;
+        },0);
+    }
 
     _openNeighbours(cell) {
         if (!cell.innerHTML) {
@@ -275,9 +303,9 @@ class Field extends Cell{
 
         let neighbours = this.cellNeighbours(y,x);
 
-        Field.selectCells(neighbours);
+        Field._selectCells(neighbours);
 
-        let countFlagsAroundCell = Field.flagCounter(neighbours);
+        let countFlagsAroundCell = Field._flagCounter(neighbours);
 
         if (parseInt(cell.dataset.info) === countFlagsAroundCell) {
             neighbours.forEach((td)=>{
@@ -292,7 +320,7 @@ class Field extends Cell{
 
     _openEmptyFieldAroundCell(y,x) {
         this.cellNeighbours(y, x).forEach((td)=>{
-            let isMine = Field.isAnyMineHere(td);
+            let isMine = Field._isAnyMineHere(td);
             let isOpened = (td.dataset.type ==='opened');
 
             if ( !(isMine || isOpened) ) {
@@ -311,7 +339,7 @@ class Field extends Cell{
             for (let j = 0; j < this.width; j++) {
                 let td = this._field.rows[i].cells[j];
 
-                let isMine = Field.isAnyMineHere(td);
+                let isMine = Field._isAnyMineHere(td);
                 let isClosed = (td.dataset.type ==='covered' || td.dataset.type ==='marked');
                 if (isClosed && !isMine) {
                     victory = false;
@@ -324,12 +352,36 @@ class Field extends Cell{
     }
 
 //---------different non-logical private methods changing styles-------------
+    static _showOpenedCell(cell) {
+        cell.classList.remove('covered');
+        cell.innerHTML = cell.dataset.info;
+    }
+
+    static _toggleFlag(cell) {
+        cell.classList.toggle('marked');
+    }
+
+    static _selectCells(array) {
+        array.forEach((td)=>{
+            if (td.dataset.type==='covered') {
+                td.classList.add('selected');
+            }
+        });
+    }
+
+    _deselectCells () {
+        let selectedCells = this._field.querySelectorAll('.selected');
+        [].forEach.call(selectedCells,(td)=>{
+            td.classList.remove('selected');
+        });
+    }
+
     _showMines() {
         for(let i = 0; i<this.height; i++) {
             for (let j = 0; j < this.width; j++) {
                 let td =  this._field.rows[i].cells[j];
 
-                if (Field.isAnyMineHere(td)) {
+                if (Field._isAnyMineHere(td)) {
                     td.classList.remove('covered');
                     td.classList.add('exploded');
                 }
@@ -339,13 +391,6 @@ class Field extends Cell{
 
     _showMinesLeft() {
         this._minesLeft.innerHTML = this.numberOfMines - this.flags;
-    }
-
-    _deselectCells () {
-        let selectedCells = this._field.querySelectorAll('.selected');
-        [].forEach.call(selectedCells,(td)=>{
-                td.classList.remove('selected');
-        });
     }
 
 }
