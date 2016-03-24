@@ -83,32 +83,26 @@ export default class Field{
         return neighbours;
     }
 
-    //-----------------event listeners----------------
+    //-----------------event handlers----------------
     _openCell(event) {
-        if (this.state === Field.END_OF_GAME) {
-            return null;
-        }
-
         let td = event.target.closest('td');
 
-        if (!td) {
-            return null;
-        }
-
-        if (td.dataset.type !== 'covered') {
-            return null;
+        if (this.state === Field.END_OF_GAME || !td ||
+            td.dataset.type !== 'covered') {
+            return;
         }
 
         let y = td.parentNode.rowIndex;
         let x = td.cellIndex;
 
-        if( Field._isAnyMineHere(td) ) {
+        if ( Field._isAnyMineHere(td) ) {
             this._endOfGame('gameOver');
+
         } else {
             td.dataset.type = 'opened';
-           Field._showOpenedCell(td);
+            Field._showOpenedCell(td);
 
-            if ( td.dataset.info ==='' ) {
+            if (td.dataset.info ==='') {
                 this._openEmptyFieldAroundCell(y,x);
             }
 
@@ -121,20 +115,13 @@ export default class Field{
     _setFlag(event) {
         event.preventDefault();
 
-        if (this.state === Field.END_OF_GAME) {
-            return null;
-        }
-
         let td = event.target.closest('td');
 
-        if (!td) {
-            return null;
+        if (this.state === Field.END_OF_GAME || !td) {
+            return;
         }
 
         let tdType = td.dataset.type;
-        if (tdType !== 'covered' && tdType !== 'marked') {
-            return null;
-        }
 
         switch (tdType) {
             case 'covered': {
@@ -147,6 +134,9 @@ export default class Field{
                 this._flags--;
                 break;
             }
+            default: {
+                return;
+            }
         }
 
         Field._toggleFlag(td);
@@ -155,25 +145,25 @@ export default class Field{
 
     _onMouseDown(event) {
         event.preventDefault();
-        if (this.state === Field.END_OF_GAME) {
-            return null;
-        }
-
-        if (event.which !==1 && event.which !==3) {
-            return null;
-        }
 
         let td = event.target.closest('td');
-        if (!td) {
-            return null;
+
+        if (this.state === Field.END_OF_GAME || !td) {
+            return;
         }
 
-        if (event.which === 1) {
-            this._simultaneousClick.leftButtonDown = true;
-        }
-
-        if (event.which === 3) {
-            this._simultaneousClick.rightButtonDown = true;
+        switch (event.which) {
+            case 1: {
+                this._simultaneousClick.leftButtonDown = true;
+                break;
+            }
+            case 3: {
+                this._simultaneousClick.rightButtonDown = true;
+                break;
+            }
+            default: {
+                return;
+            }
         }
 
         if (this._simultaneousClick.cell) {
@@ -196,12 +186,15 @@ export default class Field{
     _onMouseUp(event) {
         event.preventDefault();
 
-        if(event.which == 1) {
-            this._simultaneousClick.leftButtonDown = false;
-        }
-
-        if (event.which == 3) {
-            this._simultaneousClick.rightButtonDown = false;
+        switch (event.which) {
+            case 1:{
+                this._simultaneousClick.leftButtonDown = false;
+                break;
+            }
+            case 3:{
+                this._simultaneousClick.rightButtonDown = false;
+                break;
+            }
         }
 
         this._deselectCells();
@@ -274,8 +267,8 @@ export default class Field{
         return ( cell.dataset.info ==='M' );
     }
 
-    static _mineCounter(array) {
-        return array.reduce( (count, cell)=> {
+    static _mineCounter(cells) {
+        return cells.reduce( (count, cell)=> {
             if ( Field._isAnyMineHere(cell) ) {
                 count++;
             }
@@ -284,8 +277,8 @@ export default class Field{
         },0);
     }
 
-    static _flagCounter(array) {
-        return array.reduce( (count, cell)=> {
+    static _flagCounter(cells) {
+        return cells.reduce( (count, cell)=> {
             if ( cell.dataset.type === 'marked' ) {
                 count++;
             }
@@ -296,7 +289,7 @@ export default class Field{
 
     _openNeighbours(cell) {
         if (!cell.innerHTML) {
-            return null;
+            return;
         }
         let y = cell.parentNode.rowIndex;
         let x = cell.cellIndex;
@@ -361,16 +354,14 @@ export default class Field{
         cell.classList.toggle('marked');
     }
 
-    static _selectCells(array) {
-        array.forEach((td)=>{
-            if (td.dataset.type==='covered') {
-                td.classList.add('selected');
-            }
-        });
+    static _selectCells(cells) {
+        cells.filter(td => td.dataset.type === 'covered')
+            .forEach(td => td.classList.add('selected'));
     }
 
     _deselectCells () {
         let selectedCells = this._field.querySelectorAll('.selected');
+
         [].forEach.call(selectedCells,(td)=>{
             td.classList.remove('selected');
         });
