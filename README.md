@@ -4,7 +4,7 @@ Homework 2 (courses JS Professional from TEAM Int in Karazina)
 
 Used technologies and features:
 * plane js
-* components
+* components approach 
 * ES-2015 (classes, modules etc.)
 * polyfills for IE11 support
 * Webpack
