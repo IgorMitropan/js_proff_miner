@@ -8,3 +8,5 @@ Used technologies and features:
 * ES-2015 (classes, modules etc.)
 * polyfills for IE11 support
 * Webpack
+* Babel transpiler
+
